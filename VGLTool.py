@@ -14,8 +14,22 @@ from multiprocessing import Process
 import concurrent.futures
 
 
+
 def fbgbfileparsing(filename):
     print("Reading FreeBayes Genbank file...")
+    with open("samples.txt") as fp:
+        fp = fp.read()
+    sampleslist = fp.split()
+    samplessublists = []
+    def divide_chunks(l, n):
+        for i in range(0, len(l), n):
+            yield l[i:i + n]
+    samplessublists = list(divide_chunks(sampleslist, 3))
+    cases = []
+    for item in samplessublists:
+        if item[-1] == "c":
+            cases.append(item[0])
+    print(cases)
     filefbgb = filename
     with open(filefbgb) as f1a:
         f1a = f1a.read()
@@ -31,6 +45,14 @@ def fbgbfileparsing(filename):
             fbgbheader.append(item)
         if item[0] != "#":
             f1.append(item)
+    columnheader = fbgbheader[0].split("\t")
+    columnheader = columnheader[9:]
+    print(columnheader)
+    caseindices = []
+    for i in range(0,len(columnheader)):
+        if columnheader[i] in cases:
+            caseindices.append(i)
+
     fbgbvariants = []
     fbgballeles = []
     fbgbannotation = []
@@ -58,7 +80,9 @@ def fbgbfileparsing(filename):
         for elem in item:
             substr += elem
 # Here is where we subset cases versus controls!
-        substrsub = substr[:42]
+        substrsub = ""
+        for i in caseindices:
+            substrsub += substr[i*3:i*3+2]
 # Above^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         substr = substr.replace("/","").replace(".","")
         substrsub = substrsub.replace("/","").replace(".","")
@@ -499,9 +523,7 @@ if __name__  == '__main__':
             SamtoolsUniqueVariants.append(item)
 
     HighVariants, ModerateVariants, LowVariants, ModifierVariants = [] , [] , [] , []
-    columnheader = fbgbheader[0].split("\t")
-    columnheader = columnheader[9:]
-    print(columnheader, len(columnheader))
+
     
 
     Allvariants = CommonToAllCallersVariants + FreeBayesGATKVariants + FreeBayesSamtoolsVariants + GATKSamtoolsVariants + FreeBayesUniqueVariants + SamtoolsUniqueVariants + GATKUniqueVariants
