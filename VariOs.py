@@ -567,7 +567,8 @@ if __name__  == '__main__':
     HighVariants, ModerateVariants, LowVariants, ModifierVariants = [] , [] , [] , []
 
     
-
+    genename = []
+    effect = []
     Allvariants = CommonToAllCallersVariants + FreeBayesGATKVariants + FreeBayesSamtoolsVariants + GATKSamtoolsVariants + FreeBayesUniqueVariants + SamtoolsUniqueVariants + GATKUniqueVariants
     FreeBayesGenBankAnnotation, FreeBayesGenBankAlleles, FreeBayesRefSeqAnnotation, FreeBayesRefSeqAlleles, GATKGenBankAnnotation, GATKGenBankAlleles = [],[],[],[],[],[]
     GATKRefSeqAnnotation, GATKRefSeqAlleles, SamtoolsGenBankAnnotation, SamtoolsGenBankAlleles, SamtoolsRefSeqAnnotation, SamtoolsRefseqAlleles, CallerCount = [],[],[],[],[],[],[]
@@ -684,6 +685,11 @@ if __name__  == '__main__':
 
 
         EffectPredictionString = FreeBayesGenBankAnnotation[x] + GATKGenBankAnnotation[x] + SamtoolsGenBankAnnotation[x] + FreeBayesRefSeqAnnotation[x] + GATKRefSeqAnnotation[x] + SamtoolsRefSeqAnnotation[x]
+        
+        spliteps = EffectPredictionString.split("|")
+        genename.append(spliteps[3])
+        effect.append(spliteps[1])
+        
         strsmod = ""
         if "HIGH" in EffectPredictionString:
             strsmod += "HIGH, "
@@ -736,6 +742,8 @@ if __name__  == '__main__':
     ModifierVariantsSet = set(ModifierVariants)
     now = datetime.now()
     SheetName = (str(now) + "compdata.xlsx").replace("/","_")
+
+
     print("Creating spreadsheet...")
     df = pd.DataFrame({'Chromosome Location': Allvariants,
                     "Found by Callers:": CallerCount,
@@ -757,7 +765,22 @@ if __name__  == '__main__':
                     "GATK Case Alt 2 Freq":GATKAlt2Freq,
                     "Samtools Case Reference Allele Frequency":SamtoolsRefAlleleFreq, 
                     "Samtools Case Alt 1 Freq":SamtoolsAlt1Freq, 
-                    "Samtools Case Alt 2 Freq":SamtoolsAlt2Freq})
+                    "Samtools Case Alt 2 Freq":SamtoolsAlt2Freq,
+                    "Gene Name": genename,
+                    "Effect": effect
+                    })
+    
+
+
+    with open("SNPsiftPredictions.txt", "w") as sift:
+        for i in range(len(Allvariants)):
+            if "MODERATE" in Predictedeffectlevel[i] and len(AlleleDisplay[i])== 6:
+                addy = Allvariants[i].replace("chr","")
+                allele = AlleleDisplay[i].split(" -> ")
+                addy = addy.split("_")
+                siftline = str(addy[0]+" " +addy[1]+" "+ addy[1]+" "+ allele[0]+"/"+allele[1]+ " 1"+"\n")
+                sift.write(siftline)
+
 # #start optional comment section   
 #     #df = df[(df['FreeBayes Reference Allele Frequency'] != "1.0") | (df['GATK Reference Allele Frequency'] != '1.0') | (df['Samtools Reference Allele Frequency'] != '1.0')]
 #     df = df[(df['Case Reference Allele Frequency'] != "1.0")]
